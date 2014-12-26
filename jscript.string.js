@@ -1,7 +1,16 @@
 if (typeof jscript == 'undefined'){
-    javascript = function(){}
+    jscript = function(){}
 }
 
 jscript.string = function(){}
 
-jscipt.string.sampleFunction = function(){}
+jscript.string.sampleFunction = function(){}
+
+jscript.string.substrCount = function(inStr,inSearchStr){
+    if (inStr == null || inStr == "" ||
+        inSearchStr == null || inSearchStr == "") {
+        return 0;
+    }
+    var splitChars = inStr.split(inSearchStr);
+    return splitChars.length - 1;
+}
