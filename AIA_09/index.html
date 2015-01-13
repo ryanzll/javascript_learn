@@ -1,0 +1,55 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+        "http://www.w3.org/TR/html4/loose.dtd">
+<html>
+<head>
+    <title></title>
+    <script type="text/javascript" src="js/net.js"></script>
+    <script type="text/javascript">
+        function FillTerritory(oElem,oTarget){
+            var strValue = oElem.options[oElem.selectedIndex].value;
+            var url = "DoubleComboXML.php";
+            var strParams = "q=" + strValue + "&f=" + oTarget.form.name +
+                            "&e=" + oTarget.name;
+            var loader1 = new net.ContentLoader(url,FillDropDown,null,"POST",strParams);
+        }
+
+        function FillDropDown(){
+            var xmlDoc = this.reg.responseXML.documentElement;
+            var selElem = xmlDoc.getElementsByTagName('selectElement')[0];
+            var formElemName = selElem.childNodes[0].firstChild.nodeValue;
+            var targetElemName = selElem.childNodes[1].firstChild.nodeValue;
+
+            var targetElem = document.forms[formElemName].elements[targetElemName];
+            targetElem.options.length = 0;
+
+            var targetOptions = xmlDoc.getElementsByTagName('entry');
+
+            for(ii = 0; ii < targetOptions.length; ii++){
+                var optionText = targetOptions[ii].childNodes[0].firstChild.nodeValue;
+                var optionValue = targetOptions[ii].childNodes[1].firstChild.nodeValue;
+
+                var option = new Option(optionText,optionValue);
+
+                try{
+                    targetElem.add(option.null);
+                }
+                catch (e){
+
+                }
+            }
+        }
+    </script>
+</head>
+<body>
+<form name="form1">
+    <select name="ddlRegion" onchange="FillTerritory(this,document.form1.ddlTerritory);">
+        <option value="-1">Pick a region</option>
+        <option value="1">Eastern</option>
+        <option value="2">Western</option>
+        <option value="3">Northern</option>
+        <option value="4">Southern</option>
+    </select>
+    <select name="ddlTerritory"></select>
+</form>
+</body>
+</html>
