@@ -1,0 +1,202 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+        "http://www.w3.org/TR/html4/loose.dtd">
+<html>
+<head>
+    <title></title>
+    <script type="text/javascript" src="js/net.js"></script>
+    <script type="text/javascript">
+        window.onload = function(){
+            var spanElem = document.createElement("span");
+            spanElem.id = "spanOutput";
+            spanElem.className = "spanTextDropdown";
+            document.body.appendChild(spanElem);
+
+            document.form1.userInput.obj = SetProperties(document.form1.userInput,
+                    document.form1.userValue,
+                    "TypeAheadData.php",
+                    true,true,true,true,"No matching data",false,null);
+
+        }
+
+        function SetProperties(xElem,xHidden,xServerCode,
+            xIgnoreCase,xMatchAnywhere,xMatchTextBoxWidth,
+            xShowNoMatchMessage, xNoMatchingDataMessage, xUseTimeout,
+            xTheVisibleTime){
+            var props={
+                elem:xElem,
+                hidden:xHidden,
+                serverCode:xServerCode,
+                regExFlags:((xIgnoreCase)?"i":""),
+                regExFlags:((xMatchAnywhere)?"^":""),
+                matchAnywhere:xMatchAnywhere,
+                matchTextBoxWidth:xMatchTextBoxWidth,
+                theVisibleTime:xTheVisibleTime,
+                showNoMatchMessage:xShowNoMatchMessage,
+                noMatchingDataMessage:xNoMatchingDataMessage,
+                useTimeout:xUseTimeout
+            };
+            AddHandler(xElem);
+            return props;
+        }
+        function AddHandler(objText){
+            objText.onkeyup = GiveOptions;
+            objText.onblur = function(){
+                if(this.obj.useTimeout){
+                    StartTimeout();
+                }
+            }
+        }
+
+        function GiveOptions(e){
+            var intKey = -1;
+            if(window.event){
+                intKey = event.keyCode;
+                theTextBox = event.srcElement;
+            }
+            else{
+                intKey = e.which;
+                theTextBox = e.target;
+            }
+
+            if(theTextBox.obj.useTimeout){
+                if(isTiming){
+                    EraseTimeout();
+                }
+                else{
+                    StartTimeout();
+                }
+            }
+
+            if(theTextBox.value.length == 0){
+                arrOptions = new Array();
+                HideTheBox();
+                strLastValue="";
+                return false;
+            }
+
+            if(objLastActive == theTextBox){
+                if(intKey == 13){
+                    GrabHighlighted();
+                    theTextBox.blur();
+                    return false;
+                }
+                else if (intKey == 38){
+                    MoveHighlight(-1);
+                    return false;
+                }
+                else if(intKey == 40){
+                    MoveHighlight(1);
+                    return false;
+                }
+            }
+
+            if(objLastActive != theTextBox ||
+                theTextBox.value.indexOf(strLastValue) != 0 ||
+                    ((arrOptions.length == 0||arrOptions.length == 15)
+                && !bNoResults) || (theTextBox.value.length < strLastValue.length)){
+                objLastActive = theTextBox;
+                bMadeRequest = true;
+                TypeAhead(theTextBox.value)
+            }
+            else if(!bMadeRequest){
+                BuildList(theTextBox.value)
+            }
+            strLastValue = theTextBox.value;
+        }
+
+        function TypeAhead(str){
+            var stParams = "q = " + str + "&where = " + theTextBox.obj.matchAnywhere;
+            var loader1 = new net.ContentLoader(theTextBox.obj.serverCode,
+                BuildChoices,null,"POST",strParams);
+        }
+
+        function BuildChoices(){
+            var strText = this.req.responseText;
+            eval(strText);
+            BuildList(strLastValue);
+            bMadeRequest = false;
+        }
+
+        function BuildList(strText){
+            SetElementPosition(theTextBox);
+            var theMatches = MakeMatches(strText);
+            theMatches = theMatches.join().replace(/\,/gi,"");
+
+            if(theMatches.length > 0){
+                document.getElementById("spanOutput").innerHTML = theMatches;
+                document.getElementById("OptionList_0").className = "spanHighElement";
+                currentValueSelected = 0;
+                bNoResults = false;
+            }
+            else{
+                currentValueSelected  = -1;
+                bNoResults = true;
+                if(theTextBox.obj.showNoMatchMessage){
+                    document.getElementById("spanOutput").innerHTML = "<span class='noMatchData'>" +
+                    theTextBox.obj.noMatchingDataMessage + "</span>";
+                }
+                else{
+                    HideTheBox();
+                }
+            }
+        }
+
+        function SetElementPosition(theTextBoxInt){
+            var posX = 0;
+            var posY = 0;
+            var parentElem = theTextBoxInt;
+
+            if(null == parentElem){
+                return;
+            }
+
+            var height = theTextBoxInt.offsetHeight;
+            var width = theTextBoxInt.offsetWidth;
+            while(parentElem != null){
+                posX += parentElem.offsetLeft;
+                posY += parentElem.offsetTop;
+                parentElem = parentElem.offsetParent;
+            }
+
+            xPosElement = document.getElementById("spanOutput");
+            xPosElement.style.left = posX;
+            if(theTextBoxInt.obj.matchTextBoxWidth){
+                xPosElement.style.width = width;
+            }
+
+            xPosElement.style.top = posY + height;
+            xPosElement.style.display = "block";
+
+            if(theTextBoxInt.obj.useTimeout){
+                xPosElement.onmouseout = StartTimeout;
+                xPosElement.onmouseover = EraseTimeout;
+            }
+            else{
+                xPosElement.onmouseout = null;
+                xPosElement.onmouseover = null;
+            }
+        }
+    </script>
+    <script type="text/css">
+        span.spanTextDropdown{
+            position: absolute;
+            top: 0px;
+            left: 0px;
+            width: 150px;
+            z-index: 101;
+            background-color: #C0C0C0;
+            border: 1px solid #000000;
+            padding-left: 2px;
+            overflow: visible;
+            display: none;
+        }
+    </script>
+</head>
+<body>
+<form action="TypeAheadData.php" AUTOCOMPLETE="off" id="form1">
+AutoComplete Text Box:<input type="text" name="userInput">
+    <input type="hidden" name="userValue" id="hidden1">
+    <input type="text" name="userIgnore" style="display: none">
+</form>
+</body>
+</html>

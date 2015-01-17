@@ -14,7 +14,7 @@
         }
 
         function FillDropDown(){
-            var xmlDoc = this.reg.responseXML.documentElement;
+            var xmlDoc = this.req.responseXML.documentElement;
             var selElem = xmlDoc.getElementsByTagName('selectElement')[0];
             var formElemName = selElem.childNodes[0].firstChild.nodeValue;
             var targetElemName = selElem.childNodes[1].firstChild.nodeValue;

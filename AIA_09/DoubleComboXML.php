@@ -1,12 +1,8 @@
-/**
- * Created by PhpStorm.
- * User: ryan
- * Date: 2015/1/13
- * Time: 21:31
- */
 <?php
-echo '<?xml version="1.0" ?>
-<selectChoice>
+header('Content-Type: text/xml');
+header("Cache-Control: no-cache, must-revalidate");
+echo '<?xml version="1.0" encoding="ISO-8859-1"?>';
+$output = "<selectChoice>
   <selectElement>
     <formName>Form1</formName>
     <formElem>ddlTerritory</formElem>
@@ -19,5 +15,6 @@ echo '<?xml version="1.0" ?>
     <optionText>TerritoryDescription</optionText>
     <optionValue>TerritoryID</optionValue>
   </entry>
-</selectChoice>';
+</selectChoice>";
+print($output);
 ?>
