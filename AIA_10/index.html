@@ -27,7 +27,7 @@
                 hidden:xHidden,
                 serverCode:xServerCode,
                 regExFlags:((xIgnoreCase)?"i":""),
-                regExFlags:((xMatchAnywhere)?"^":""),
+                regExAny:((xMatchAnywhere)?"":"^"),
                 matchAnywhere:xMatchAnywhere,
                 matchTextBoxWidth:xMatchTextBoxWidth,
                 theVisibleTime:xTheVisibleTime,
@@ -47,6 +47,11 @@
             }
         }
 
+        var objLastActive;
+        var currentValueSelected = -1;
+        var bNoResults = false;
+        var isTiming  =false;
+        var strLastValue;
         function GiveOptions(e){
             var intKey = -1;
             if(window.event){
@@ -105,7 +110,7 @@
         }
 
         function TypeAhead(str){
-            var stParams = "q = " + str + "&where = " + theTextBox.obj.matchAnywhere;
+            var strParams = "q = " + str + "&where = " + theTextBox.obj.matchAnywhere + "&name = " + theTextBox.name;
             var loader1 = new net.ContentLoader(theTextBox.obj.serverCode,
                 BuildChoices,null,"POST",strParams);
         }
@@ -176,6 +181,67 @@
                 xPosElement.onmouseover = null;
             }
         }
+
+        var count4Id = 0;
+        function MakeMatches(compareStr){
+            count4Id = 0;
+            var matchArray = new Array();
+            var regExp = new RegExp(theTextBox.obj.regExAny + compareStr,theTextBox.obj.regExFlags);
+            for(ii = 0; ii <arrOptions.length; ii++){
+                var theMatch = arrOptions[ii][0].match(regExp);
+                if(theMatch){
+                    matchArray[matchArray.length] = CreateUnderline(arrOptions[ii][0],compareStr,ii);
+                }
+            }
+
+            return matchArray;
+        }
+
+        var underStart = "<span class='spanMatchText'>";
+        var underEnd = "</span>";
+        var selectSpanStart = "<span style = 'width:100%;display:block;' class = 'spanNormalElement' onmouseover='SetHighColor(this)'";
+        var selectSpanEnd = "</span>";
+
+        function CreateUnderline(str,textMatch,val)
+        {
+            selectSpanMid = "onclick='SetText(" + val+ ")'" + "id= 'OptionList_" + count4Id + "' 'theArrayNumber = '" +val +"'>";
+            var regExp = new RegExp(theTextBox.obj.regExFlags + textMatch ,theTextBox.obj.regExFlags);
+            var start = str.search(regExp);
+            var matchedText = str.substring(start,start + textMatch.length);
+            count4Id ++;
+            return selectSpanStart + selectSpanMid + str.replace(regExp,underStart + matchedText + underEnd) + selectSpanEnd;
+        }
+
+        function SetText(val){
+            theTextBox.value = arrOptions[val][0];
+            theTextBox.obj.hidden.value = arrOptions[val][1];
+            document.getElementById("spanOutput").style.display = "none";
+            currentValueSelected = -1;
+        }
+
+        function GrabHighLighted()
+        {
+            if(currentValueSelected >= 0){
+                val = document.getElementById("OptionList_" + currentValueSelected).getAttribute("theArrayNumber");
+                SetText(val);
+                HideTheBox();
+            }
+        }
+
+        function HideTheBox(){
+            document.getElementById("spanOutput").style.display = "none";
+            currentValueSelected = -1;
+            EraseTimeout();
+        }
+
+        function EraseTimeout(){
+            clearTimeout(isTiming);
+            isTiming = false;
+        }
+
+        function StartTimeout(){
+            isTiming = SetTimeout("HideTheBox()",theTextBox.obj.theVisibleTime);
+        }
     </script>
     <script type="text/css">
         span.spanTextDropdown{
@@ -193,7 +259,7 @@
     </script>
 </head>
 <body>
-<form action="TypeAheadData.php" AUTOCOMPLETE="off" id="form1">
+<form action="TypeAheadData.php" AUTOCOMPLETE="off" id="form1" name="form1">
 AutoComplete Text Box:<input type="text" name="userInput">
     <input type="hidden" name="userValue" id="hidden1">
     <input type="text" name="userIgnore" style="display: none">
